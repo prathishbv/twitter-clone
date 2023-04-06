@@ -14,7 +14,7 @@
         <form class='form' id='tweet-create-form' method='POST' action='/create-tweet'>
             {% csrf_token %}
             <input type='hidden' value='/' name='next' />
-            <textarea class='form-control' name='content' placeholder='Your tweet...'></textarea>
+            <textarea required class='form-control' name='content' placeholder='Your tweet...'></textarea>
             <button type='submit' class='btn btn-primary'>Tweet</button>
         </form>
     </div>
@@ -23,6 +23,7 @@
 <div class='row' id='tweets'>
     Loading...
 </div>
+
 <script>
 
 
@@ -33,12 +34,20 @@
         const url = myForm.getAttribute("action")
         const method = myForm.getAttribute("method")
         const xhr = new XMLHttpRequest()
+        const responseType = "json"
+        xhr.responseType = responseType
         xhr.open(method, url)
+        xhr.setRequestHeader("HTTP_X_REQUESTED_WITH", "XMLHttpRequest")
+        xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest")
         xhr.onload = function() {
-            const serverResponse = xhr.response
-            // console.log(serverResponse)
-            const tweetsEl = document.getElementById("tweets")
-            loadTweets(tweetsEl) 
+            if (xhr.status === 201) {
+                const newTweetJson = xhr.response
+                const newTweetElement = formatTweetElement(newTweetJson)
+                const ogHtml = tweetsContainerElement.innerHTML
+                tweetsContainerElement.innerHTML = newTweetElement + ogHtml
+                myForm.reset()
+            }
+            
         }
         xhr.send(myFormData)
     }
@@ -46,7 +55,7 @@
     tweetCreateFormEl.addEventListener("submit", handleTweetCreateFormDidSumbit)
     
     
-    const tweetsEl = document.getElementById("tweets") 
+    const tweetsContainerElement = document.getElementById("tweets") 
     
     function loadTweets(tweetsElement) {
         const xhr = new XMLHttpRequest()
@@ -70,7 +79,7 @@
         xhr.send()
     }
     
-    loadTweets(tweetsEl)
+    loadTweets(tweetsContainerElement)
     
     
     function handleDidLike (tweet_id, currentCount) {
@@ -93,6 +102,6 @@
     
     
     
-    </script>
+</script>  
 
 {% endblock content%}

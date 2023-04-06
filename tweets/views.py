@@ -16,8 +16,12 @@ def tweet_create_view(request, *args, **kwargs):
     form = TweetForm(request.POST or None)
     next_url = request.POST.get("next") or None
     if form.is_valid():
+        ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        print("ajax", ajax)
         obj = form.save(commit=False)
         obj.save()
+        if ajax:
+            return JsonResponse(obj.serialize(), status=201) # 201 is generally for the creation of element
         if next_url != None and url_has_allowed_host_and_scheme(next_url, ALLOWED_HOST):
             return redirect(next_url)
         form = TweetForm()
@@ -25,7 +29,7 @@ def tweet_create_view(request, *args, **kwargs):
 
 def tweet_list_view(request, *args, **kwargs):
     obj = Tweet.objects.all()
-    tweet_list = [{"id": val.id, "content": val.content, "likes": random.randint(0,100)} for val in obj]
+    tweet_list = [val.serialize() for val in obj]
     data = {
         "isUsers": False, 
         "response": tweet_list,
